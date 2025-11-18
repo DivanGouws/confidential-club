@@ -248,8 +248,8 @@ export function Sidebar() {
     { label: "Statistics", icon: StatsIcon, path: "/stats" },
     { label: "Profile Registration", icon: RegisterIcon, path: "/register" },
     { label: "Whitepaper", icon: WhitepaperIcon, path: "/whitepaper" },
-    { label: "GitHub", icon: GithubIcon, path: "https://github.com/DivanGouws/confidential-club", external: true },
     { label: "Messages", icon: MessageIcon, path: "/messages", disabled: true },
+    { label: "GitHub", icon: GithubIcon, path: "https://github.com/DivanGouws/confidential-club", external: true },
     { label: getInitStatusLabel(), icon: getInitStatusIcon(), path: "/init-status" },
   ];
 
