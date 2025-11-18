@@ -11,6 +11,7 @@ import { UserIcon } from "@/components/icons/user";
 import { RegisterIcon } from "@/components/icons/register";
 import { StatsIcon } from "@/components/icons/stats";
 import { WhitepaperIcon } from "@/components/icons/whitepaper";
+import { GithubIcon } from "@/components/icons/github";
 import { CheckCircleIcon } from "@/components/icons/check-circle";
 import { XCircleIcon } from "@/components/icons/x-circle";
 import { LoaderIcon } from "@/components/icons/loader";
@@ -247,6 +248,7 @@ export function Sidebar() {
     { label: "Statistics", icon: StatsIcon, path: "/stats" },
     { label: "Profile Registration", icon: RegisterIcon, path: "/register" },
     { label: "Whitepaper", icon: WhitepaperIcon, path: "/whitepaper" },
+    { label: "GitHub", icon: GithubIcon, path: "https://github.com/DivanGouws/confidential-club", external: true },
     { label: "Messages", icon: MessageIcon, path: "/messages", disabled: true },
     { label: getInitStatusLabel(), icon: getInitStatusIcon(), path: "/init-status" },
   ];
@@ -303,6 +305,10 @@ export function Sidebar() {
                 onClick={(e) => {
                   e.preventDefault();
                   if (isDisabled) return;
+                  if ("external" in item && item.external) {
+                    window.open(item.path, "_blank", "noopener,noreferrer");
+                    return;
+                  }
                   if (!isActive) {
                     startLoading();
                     router.push(item.path);
