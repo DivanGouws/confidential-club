@@ -1,0 +1,259 @@
+@import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #beb9b9;
+  --background-rgb: 184, 181, 181;
+  --foreground: #171717;
+  
+  --shimmer-color-dark: #52525b;
+  --shimmer-color-medium: #71717a;
+  --shimmer-color-light: #a1a1aa;
+  --shimmer-color-bright: #d4d4d8;
+  --shimmer-shadow-color: rgba(212, 212, 216, 0.5);
+  --shimmer-border-color: rgba(212, 212, 216, 0.3);
+  --shimmer-animation-duration: 16s;
+}
+
+.dark {
+  --background: #0a0a0a;
+  --background-rgb: 10, 10, 10;
+  --foreground: #ededed;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Custom scrollbar styles - WebKit */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f4f4f5;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d4d4d8;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1aa;
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: #71717a;
+}
+
+/* Dark mode scrollbar */
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar-track {
+    background: #18181b;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #3f3f46;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #52525b;
+  }
+
+  ::-webkit-scrollbar-thumb:active {
+    background: #71717a;
+  }
+}
+
+/* Custom scrollbar styles - Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #d4d4d8 #f4f4f5;
+}
+
+@media (prefers-color-scheme: dark) {
+  * {
+    scrollbar-color: #3f3f46 #18181b;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer-text {
+  background: linear-gradient(
+    90deg,
+    var(--shimmer-color-dark) 0%,
+    var(--shimmer-color-medium) 15%,
+    var(--shimmer-color-light) 35%,
+    var(--shimmer-color-bright) 50%,
+    var(--shimmer-color-light) 65%,
+    var(--shimmer-color-medium) 85%,
+    var(--shimmer-color-dark) 100%
+  );
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer var(--shimmer-animation-duration) ease-in-out infinite;
+  filter: drop-shadow(0 0 8px rgba(212, 212, 216, 0.4)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  position: relative;
+}
+
+.shimmer-button {
+  background: linear-gradient(
+    90deg,
+    var(--shimmer-color-dark) 0%,
+    var(--shimmer-color-medium) 15%,
+    var(--shimmer-color-light) 35%,
+    var(--shimmer-color-bright) 50%,
+    var(--shimmer-color-light) 65%,
+    var(--shimmer-color-medium) 85%,
+    var(--shimmer-color-dark) 100%
+  );
+  background-size: 300% 100%;
+  animation: shimmer var(--shimmer-animation-duration) ease-in-out infinite;
+  filter: drop-shadow(0 0 12px var(--shimmer-shadow-color)) drop-shadow(0 2px 8px rgba(0, 0, 0, 0.2));
+  position: relative;
+  border: 1px solid var(--shimmer-border-color);
+  cursor: pointer;
+  transition: filter 0.2s ease;
+}
+
+.shimmer-button:hover {
+  filter: drop-shadow(0 0 16px rgba(212, 212, 216, 0.7)) drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+}
+
+.shimmer-button:active {
+  filter: drop-shadow(0 0 8px rgba(212, 212, 216, 0.4)) drop-shadow(0 2px 6px rgba(0, 0, 0, 0.2));
+}
+
+.shimmer-button:disabled {
+  animation: none;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.shimmer-silver-bg {
+  background: linear-gradient(
+    90deg,
+    var(--shimmer-color-dark) 0%,
+    var(--shimmer-color-medium) 15%,
+    var(--shimmer-color-light) 35%,
+    var(--shimmer-color-bright) 50%,
+    var(--shimmer-color-light) 65%,
+    var(--shimmer-color-medium) 85%,
+    var(--shimmer-color-dark) 100%
+  );
+  background-size: 300% 100%;
+  animation: shimmer var(--shimmer-animation-duration) ease-in-out infinite;
+}
+
+/* Unified semi-transparent silver animated overlay background */
+.overlay-silver {
+  background-color: rgba(212, 212, 216, 0.12);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.10) 0%,
+    rgba(255, 255, 255, 0.22) 50%,
+    rgba(255, 255, 255, 0.10) 100%
+  );
+  background-size: 300% 100%;
+  animation: shimmer var(--shimmer-animation-duration) ease-in-out infinite;
+}
+
+.dark .overlay-silver {
+  background-color: rgba(0, 0, 0, 0.35);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.16) 50%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+}
+
+.overlay-silver-text { color: rgba(212, 212, 216, 0.92); }
+.overlay-silver-text-dim { color: rgba(212, 212, 216, 0.60); }
+.overlay-silver-border { border-color: rgba(212, 212, 216, 0.85); }
+.overlay-silver-ping { background-color: rgba(212, 212, 216, 0.75); }
+
+/* Layout width configuration (single source of truth for global layout) */
+:root {
+  --app-container-max: 80rem; /* Overall three-column container width */
+  --app-main-max: 56rem;      /* Maximum width of the central post content area */
+  --sidebar-left-offset: 2rem; /* Left padding inside sidebar (px-6 1.5rem) + inline px-2 (0.5rem) */
+  --aside-right-padding: 1.5rem; /* Inner padding of the right recommendation area (p-6 = 1.5rem) */
+  --sidebar-nav-icon-offset: 2.25rem; /* Sidebar left padding (px-6 1.5rem) + nav button padding (px-3 0.75rem) */
+  --app-aside-width: 20rem; /* Right sidebar width, default 20rem (original w-72 was 18rem) */
+}
+
+.app-container { max-width: var(--app-container-max); }
+.app-main { max-width: var(--app-main-max); }
+.pad-left-sidebar { padding-left: var(--sidebar-left-offset); }
+.mr-aside-pad { margin-right: var(--aside-right-padding); }
+.ml-sidebar-nav { margin-left: var(--sidebar-nav-icon-offset); }
+.app-aside { width: var(--app-aside-width); }
+
+@keyframes mosaic-flicker {
+  0%, 100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes bounce-char {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1.5px);
+  }
+}
+
+@keyframes dotMove {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(var(--move-x, 0px), var(--move-y, 0px));
+  }
+}
+
+@keyframes scrollText {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes scrollTextVertical {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}

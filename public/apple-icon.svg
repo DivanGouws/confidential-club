@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="180" height="180" viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="silverGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#52525b"/>
+      <stop offset="18%" stop-color="#71717a"/>
+      <stop offset="38%" stop-color="#a1a1aa"/>
+      <stop offset="50%" stop-color="#d4d4d8"/>
+      <stop offset="62%" stop-color="#a1a1aa"/>
+      <stop offset="82%" stop-color="#71717a"/>
+      <stop offset="100%" stop-color="#52525b"/>
+    </linearGradient>
+    <filter id="softShadow">
+      <feDropShadow dx="0" dy="0" stdDeviation="2" flood-color="rgba(212,212,216,0.5)"/>
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="rgba(0,0,0,0.2)"/>
+    </filter>
+  </defs>
+  <path d="M90 15 L15 165 H165 Z" fill="url(#silverGradient)" filter="url(#softShadow)"/>
+</svg>
+
