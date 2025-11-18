@@ -88,6 +88,7 @@ export default function RegisterPage() {
           twitter: nextTwitter || null,
           cid: profileCid,
           updatedAt: data.updatedAt || new Date().toISOString(),
+          timestamp: Date.now(),
         });
       } catch (error) {
         console.error("Failed to load existing profile:", error);

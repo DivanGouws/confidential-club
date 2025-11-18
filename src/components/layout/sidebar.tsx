@@ -146,8 +146,8 @@ export function Sidebar() {
       try {
         const cached = await getUserProfileCache(address);
         if (cached && cached.cid === profileCid) {
-          setProfileNickname(cached.nickname);
-          setProfileAvatar(cached.avatar);
+          setProfileNickname(cached.nickname ?? null);
+          setProfileAvatar(cached.avatar ?? null);
           return;
         }
 
@@ -160,10 +160,11 @@ export function Sidebar() {
           twitter: data.twitter || null,
           cid: profileCid,
           updatedAt: data.updatedAt || new Date().toISOString(),
+          timestamp: Date.now(),
         };
 
-        setProfileNickname(profile.nickname);
-        setProfileAvatar(profile.avatar);
+        setProfileNickname(profile.nickname ?? null);
+        setProfileAvatar(profile.avatar ?? null);
         await setUserProfileCache(address, profile);
       } catch (e) {
         console.error("Failed to load user profile:", e);

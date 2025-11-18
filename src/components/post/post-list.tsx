@@ -1067,6 +1067,7 @@ function PostItem({ postId, creatorAddress: _creatorAddress }: PostItemProps) {
           twitter: data.twitter || null,
           cid: effectiveCreatorProfileCid,
           updatedAt: data.updatedAt || new Date().toISOString(),
+          timestamp: Date.now(),
         };
 
         setCreatorProfile(profile);
