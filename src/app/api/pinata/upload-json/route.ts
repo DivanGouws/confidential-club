@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PINATA_JWT = process.env.PINATA_JWT || "";
+const PINATA_JWT = process.env.NEXT_PUBLIC_PINATA_JWT || "";
 
 export async function POST(request: NextRequest) {
   if (!PINATA_JWT) {

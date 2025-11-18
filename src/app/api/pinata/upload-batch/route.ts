@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
-  const PINATA_JWT = process.env.PINATA_JWT || "";
+  const PINATA_JWT = process.env.NEXT_PUBLIC_PINATA_JWT || "";
   if (!PINATA_JWT) {
     return NextResponse.json({ error: "PINATA_JWT is not configured" }, { status: 500 });
   }
