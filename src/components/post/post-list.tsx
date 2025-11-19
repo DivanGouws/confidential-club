@@ -1585,9 +1585,9 @@ export function PostList({ filterPostId, filterCreatorAddress, purchasedPostIds 
       return;
     }
     const count = Number(postCount);
+    const allIds = Array.from({ length: count }, (_, i) => count - i);
+    setDisplayedPostIds(allIds.slice(0, 10));
     if (count !== lastKnownCount) {
-      const allIds = Array.from({ length: count }, (_, i) => count - i);
-      setDisplayedPostIds(allIds.slice(0, 10));
       setLastKnownCount(count);
     }
   }, [postCount, filterPostId, purchasedPostIds, lastKnownCount]);
