@@ -204,24 +204,36 @@ function PostContent({ postId, purchased, shouldDecrypt, onDecryptEnd, onDecrypt
         return;
       }
 
-      hasDecryptedRef.current = false;
-      setDecryptedSegments(new Map());
+      // 检查是否有缓存状态需要保留
+      const cachedState = globalStateKey && typeof window !== "undefined" ? (() => {
+        const w = window as unknown as { 
+          __confidentialPostState?: Record<string, {
+            decryptedSegments?: Array<[number, string]>;
+            decryptedImages?: Array<[string, string]>;
+            fullContent?: string;
+            collapsed?: boolean;
+          }>;
+        };
+        return w.__confidentialPostState?.[globalStateKey];
+      })() : null;
       
-      // 检查是否有缓存状态，如果没有才 revoke blob URLs
-      const hasCachedState = globalStateKey && typeof window !== "undefined" && (() => {
-        const w = window as unknown as { __confidentialPostState?: Record<string, unknown> };
-        return w.__confidentialPostState && w.__confidentialPostState[globalStateKey];
-      })();
+      const hasCachedContent = cachedState && (
+        (cachedState.decryptedSegments && cachedState.decryptedSegments.length > 0) ||
+        (cachedState.decryptedImages && cachedState.decryptedImages.length > 0)
+      );
       
-      setDecryptedImages((prev) => {
-        if (!hasCachedState) {
+      // 如果有缓存，跳过清空操作，直接加载并恢复
+      if (!hasCachedContent) {
+        hasDecryptedRef.current = false;
+        setDecryptedSegments(new Map());
+        setDecryptedImages((prev) => {
           prev.forEach((url) => URL.revokeObjectURL(url));
-        }
-        return new Map();
-      });
-      setImageErrors(new Map());
-      setContent(null);
-      setError(null);
+          return new Map();
+        });
+        setImageErrors(new Map());
+        setContent(null);
+        setError(null);
+      }
 
       let hashString: string | null = null;
       if (ipfsHash) {
@@ -372,30 +384,16 @@ function PostContent({ postId, purchased, shouldDecrypt, onDecryptEnd, onDecrypt
         const fullContent = fullContentParts.join("");
         setContent(fullContent);
 
-        // 加载完内容后，立即尝试恢复缓存的解密状态
-        if (globalStateKey && typeof window !== "undefined") {
-          const w = window as unknown as {
-            __confidentialPostState?: Record<string, {
-              decryptedSegments: Array<[number, string]>;
-              decryptedImages: Array<[string, string]>;
-              fullContent: string;
-              collapsed: boolean;
-            }>;
-          };
-          const map = w.__confidentialPostState;
-          if (map && map[globalStateKey]) {
-            const entry = map[globalStateKey];
-            const restoredSegments = new Map<number, string>(entry.decryptedSegments);
-            const restoredImages = new Map<string, string>(entry.decryptedImages);
-            
-            if (restoredSegments.size > 0) {
-              setDecryptedSegments(restoredSegments);
-              setDecryptedImages(restoredImages);
-              hasDecryptedRef.current = true;
-              setContent(entry.fullContent);
-              setCollapsed(entry.collapsed);
-            }
-          }
+        // 立即恢复缓存状态（如果存在）
+        if (cachedState && hasCachedContent) {
+          const restoredSegments = new Map<number, string>(cachedState.decryptedSegments || []);
+          const restoredImages = new Map<string, string>(cachedState.decryptedImages || []);
+          
+          setDecryptedSegments(restoredSegments);
+          setDecryptedImages(restoredImages);
+          hasDecryptedRef.current = true;
+          setContent(cachedState.fullContent || fullContent);
+          setCollapsed(cachedState.collapsed ?? false);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load post content");
@@ -407,7 +405,7 @@ function PostContent({ postId, purchased, shouldDecrypt, onDecryptEnd, onDecrypt
           loadContent();
         }, [postId, ipfsHash, isLoadingHash, onContentLoaded, globalStateKey]);
 
-  // Restore in-memory global state after navigation within the SPA (backup mechanism)
+  // Restore in-memory global state after navigation within the SPA
   useEffect(() => {
     const restoreDecryptedState = () => {
       if (!globalStateKey || hasDecryptedRef.current) return;
@@ -436,7 +434,7 @@ function PostContent({ postId, purchased, shouldDecrypt, onDecryptEnd, onDecrypt
 
       setDecryptedSegments(restoredSegments);
       setDecryptedImages(restoredImages);
-      hasDecryptedRef.current = restoredSegments.size > 0 || restoredImages.size > 0;
+      hasDecryptedRef.current = true;
       setContent(entry.fullContent);
       setCollapsed(entry.collapsed);
 
@@ -446,7 +444,7 @@ function PostContent({ postId, purchased, shouldDecrypt, onDecryptEnd, onDecrypt
     };
 
     restoreDecryptedState();
-  }, [globalStateKey, segments.length, images.length, onDecryptEnd]);
+  }, [globalStateKey, segments.length, images.length, onDecryptEnd, postId]);
 
   const decryptedImagesRef = useRef<Map<string, string>>(new Map());
   const imageUrlsRef = useRef<Map<string, string>>(new Map());
@@ -461,8 +459,37 @@ function PostContent({ postId, purchased, shouldDecrypt, onDecryptEnd, onDecrypt
 
   useEffect(() => {
     return () => {
-      decryptedImagesRef.current.forEach((url) => URL.revokeObjectURL(url));
-      imageUrlsRef.current.forEach((u) => { if (typeof u === 'string' && u.startsWith('blob:')) URL.revokeObjectURL(u); });
+      // 组件卸载时，只清理不在全局缓存中的 blob URL
+      const w = typeof window !== "undefined" ? (window as unknown as { 
+        __confidentialPostState?: Record<string, {
+          decryptedImages?: Array<[string, string]>;
+        }>;
+      }) : {};
+
+      // 收集所有缓存中的 URL
+      const cachedUrls = new Set<string>();
+      if (w.__confidentialPostState) {
+        Object.values(w.__confidentialPostState).forEach(state => {
+          if (state.decryptedImages) {
+            state.decryptedImages.forEach(([, url]) => cachedUrls.add(url));
+          }
+        });
+      }
+
+      decryptedImagesRef.current.forEach((url) => {
+        // 如果 URL 在缓存中，不要销毁它
+        if (!cachedUrls.has(url)) {
+          URL.revokeObjectURL(url);
+        } else {
+          console.log(`[PostContent] Preserving blob URL on unmount: ${url}`);
+        }
+      });
+
+      imageUrlsRef.current.forEach((u) => { 
+        if (typeof u === 'string' && u.startsWith('blob:') && !cachedUrls.has(u)) {
+          URL.revokeObjectURL(u);
+        }
+      });
     };
   }, []);
 
