@@ -206,8 +206,17 @@ function PostContent({ postId, purchased, shouldDecrypt, onDecryptEnd, onDecrypt
 
       hasDecryptedRef.current = false;
       setDecryptedSegments(new Map());
+      
+      // 检查是否有缓存状态，如果没有才 revoke blob URLs
+      const hasCachedState = globalStateKey && typeof window !== "undefined" && (() => {
+        const w = window as unknown as { __confidentialPostState?: Record<string, unknown> };
+        return w.__confidentialPostState && w.__confidentialPostState[globalStateKey];
+      })();
+      
       setDecryptedImages((prev) => {
-        prev.forEach((url) => URL.revokeObjectURL(url));
+        if (!hasCachedState) {
+          prev.forEach((url) => URL.revokeObjectURL(url));
+        }
         return new Map();
       });
       setImageErrors(new Map());
@@ -362,6 +371,32 @@ function PostContent({ postId, purchased, shouldDecrypt, onDecryptEnd, onDecrypt
 
         const fullContent = fullContentParts.join("");
         setContent(fullContent);
+
+        // 加载完内容后，立即尝试恢复缓存的解密状态
+        if (globalStateKey && typeof window !== "undefined") {
+          const w = window as unknown as {
+            __confidentialPostState?: Record<string, {
+              decryptedSegments: Array<[number, string]>;
+              decryptedImages: Array<[string, string]>;
+              fullContent: string;
+              collapsed: boolean;
+            }>;
+          };
+          const map = w.__confidentialPostState;
+          if (map && map[globalStateKey]) {
+            const entry = map[globalStateKey];
+            const restoredSegments = new Map<number, string>(entry.decryptedSegments);
+            const restoredImages = new Map<string, string>(entry.decryptedImages);
+            
+            if (restoredSegments.size > 0) {
+              setDecryptedSegments(restoredSegments);
+              setDecryptedImages(restoredImages);
+              hasDecryptedRef.current = true;
+              setContent(entry.fullContent);
+              setCollapsed(entry.collapsed);
+            }
+          }
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load post content");
       } finally {
@@ -370,12 +405,13 @@ function PostContent({ postId, purchased, shouldDecrypt, onDecryptEnd, onDecrypt
     };
 
           loadContent();
-        }, [postId, ipfsHash, isLoadingHash, onContentLoaded]);
+        }, [postId, ipfsHash, isLoadingHash, onContentLoaded, globalStateKey]);
 
-  // Restore in-memory global state after navigation within the SPA
+  // Restore in-memory global state after navigation within the SPA (backup mechanism)
   useEffect(() => {
     const restoreDecryptedState = () => {
-      if (!globalStateKey || hasDecryptedRef.current || segments.length === 0) return;
+      if (!globalStateKey || hasDecryptedRef.current) return;
+      if (segments.length === 0 && images.length === 0) return;
       if (typeof window === "undefined") return;
 
       const w = window as unknown as {
@@ -396,19 +432,21 @@ function PostContent({ postId, purchased, shouldDecrypt, onDecryptEnd, onDecrypt
       const restoredSegments = new Map<number, string>(entry.decryptedSegments);
       const restoredImages = new Map<string, string>(entry.decryptedImages);
 
+      if (restoredSegments.size === 0 && restoredImages.size === 0) return;
+
       setDecryptedSegments(restoredSegments);
       setDecryptedImages(restoredImages);
-      hasDecryptedRef.current = restoredSegments.size > 0;
+      hasDecryptedRef.current = restoredSegments.size > 0 || restoredImages.size > 0;
       setContent(entry.fullContent);
       setCollapsed(entry.collapsed);
 
-      if (restoredSegments.size > 0) {
+      if (restoredSegments.size > 0 || restoredImages.size > 0) {
         onDecryptEnd?.(true);
       }
     };
 
     restoreDecryptedState();
-  }, [globalStateKey, segments.length, onDecryptEnd]);
+  }, [globalStateKey, segments.length, images.length, onDecryptEnd]);
 
   const decryptedImagesRef = useRef<Map<string, string>>(new Map());
   const imageUrlsRef = useRef<Map<string, string>>(new Map());
