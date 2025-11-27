@@ -165,9 +165,5 @@ The `ConfidentialClub.sol` contract provides the following key functions:
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## License
 
-This project is part of the Zama competition submission.
-
----
 
