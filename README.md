@@ -171,4 +171,3 @@ This project is part of the Zama competition submission.
 
 ---
 
-**Built with Zama FHEVM for the Zama Competition**
