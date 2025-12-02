@@ -40,7 +40,7 @@ The platform adopts a hybrid encryption architecture:
 
 ### Blockchain
 - **Smart Contracts:** Solidity
-- **FHE Framework:** Zama FHEVM v0.8
+- **FHE Framework:** Zama FHEVM v0.9
 - **Development:** Hardhat
 - **Testing:** Hardhat + Mocha
 
