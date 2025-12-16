@@ -1608,6 +1608,16 @@ export function PostList({ filterPostId, filterCreatorAddress, purchasedPostIds 
     },
   });
 
+  const { data: creatorPostIds, isLoading: isLoadingCreatorPosts } = useReadContract({
+    address: CONFIDENTIAL_CLUB_ADDRESS as `0x${string}`,
+    abi: confidentialClubAbi,
+    functionName: "getCreatorPosts",
+    args: [filterCreatorAddress as `0x${string}`],
+    query: {
+      enabled: Boolean(CONFIDENTIAL_CLUB_ADDRESS) && Boolean(filterCreatorAddress),
+    },
+  });
+
   useEffect(() => {
     const handleRefreshPosts = async () => {
       try {
@@ -1644,6 +1654,14 @@ export function PostList({ filterPostId, filterCreatorAddress, purchasedPostIds 
       setDisplayedPostIds([filterPostId]);
       return;
     }
+    if (filterCreatorAddress && creatorPostIds) {
+      const ids = (creatorPostIds as bigint[]).map((id) => Number(id)).sort((a, b) => b - a);
+      setDisplayedPostIds(ids);
+      return;
+    }
+    if (filterCreatorAddress && !creatorPostIds) {
+      return;
+    }
     if (!postCount || Number(postCount) === 0) {
       setDisplayedPostIds([]);
       setLastKnownCount(0);
@@ -1655,7 +1673,7 @@ export function PostList({ filterPostId, filterCreatorAddress, purchasedPostIds 
     if (count !== lastKnownCount) {
       setLastKnownCount(count);
     }
-  }, [postCount, filterPostId, purchasedPostIds, lastKnownCount]);
+  }, [postCount, filterPostId, filterCreatorAddress, creatorPostIds, purchasedPostIds, lastKnownCount]);
 
   const postIds = displayedPostIds;
 
@@ -1668,7 +1686,7 @@ export function PostList({ filterPostId, filterCreatorAddress, purchasedPostIds 
     },
   });
 
-  if (isLoading || isLoadingFilterPost) {
+  if (isLoading || isLoadingFilterPost || isLoadingCreatorPosts) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-sm text-zinc-500 dark:text-zinc-400">Loading...</div>
@@ -1696,15 +1714,12 @@ export function PostList({ filterPostId, filterCreatorAddress, purchasedPostIds 
   }
 
   const creatorAddr = typeof creatorAddress === "string" ? creatorAddress : null;
-  if (filterCreatorAddress && creatorAddr) {
-    const eq = creatorAddr.toLowerCase() === filterCreatorAddress.toLowerCase();
-    if (!eq) {
-      return (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-sm text-zinc-500 dark:text-zinc-400">No matching posts found</div>
-        </div>
-      );
-    }
+  if (filterCreatorAddress && creatorPostIds && (creatorPostIds as bigint[]).length === 0) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-sm text-zinc-500 dark:text-zinc-400">No posts found for this address</div>
+      </div>
+    );
   }
 
   return (
