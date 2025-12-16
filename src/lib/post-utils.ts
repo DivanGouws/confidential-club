@@ -54,30 +54,8 @@ export async function decryptAESKey(
   }
 
   try {
-    // First try the v0.9 simplified decryption interface
-    const maybeSimple = relayerInstance.userDecrypt as unknown as (
-      encryptedValue: string,
-      contractAddress: string
-    ) => Promise<number | bigint>;
-
-    let aesKeyValue: number | bigint | undefined;
-    try {
-      aesKeyValue = await maybeSimple(handleString, contractAddress);
-    } catch (_) {
-      aesKeyValue = undefined;
-    }
-
-    if (aesKeyValue !== undefined && aesKeyValue !== null) {
-      const hex = (typeof aesKeyValue === "bigint" ? aesKeyValue : BigInt(aesKeyValue))
-        .toString(16)
-        .padStart(64, "0");
-      if (!hex || hex.length === 0) {
-        throw new Error("Failed to convert AES key");
-      }
-      return hex;
-    }
-
-    // Fallback to legacy signature flow (for compatibility with older SDKs)
+    // Use the standard EIP-712 signature flow (SDK 0.3.0-6)
+    const t0 = performance.now();
     const keypair = relayerInstance.generateKeypair();
     const startTimeStamp = Math.floor(Date.now() / 1000).toString();
     const durationDays = "1";
@@ -88,11 +66,15 @@ export async function decryptAESKey(
       startTimeStamp,
       durationDays
     );
+    if (process.env.NODE_ENV === "development") {
+      console.log(`[decryptAESKey] createEIP712: ${(performance.now() - t0).toFixed(0)}ms`);
+    }
 
     if (!walletClient.account) {
       throw new Error("Wallet account is not ready");
     }
 
+    const t1 = performance.now();
     const signature = await walletClient.signTypedData({
       account: walletClient.account,
       domain: eip712.domain as Record<string, unknown>,
@@ -100,6 +82,9 @@ export async function decryptAESKey(
       primaryType: "UserDecryptRequestVerification",
       message: eip712.message as Record<string, unknown>,
     });
+    if (process.env.NODE_ENV === "development") {
+      console.log(`[decryptAESKey] signTypedData: ${(performance.now() - t1).toFixed(0)}ms`);
+    }
 
     const handleContractPairs = [{ handle: handleString, contractAddress }];
     const userDecryptLegacy = relayerInstance.userDecrypt as unknown as (
@@ -113,6 +98,7 @@ export async function decryptAESKey(
       durationDays: string
     ) => Promise<Record<string, bigint | string>>;
 
+    const t2 = performance.now();
     const result = await userDecryptLegacy(
       handleContractPairs,
       keypair.privateKey,
@@ -123,6 +109,9 @@ export async function decryptAESKey(
       startTimeStamp,
       durationDays
     );
+    if (process.env.NODE_ENV === "development") {
+      console.log(`[decryptAESKey] userDecrypt: ${(performance.now() - t2).toFixed(0)}ms`);
+    }
 
     const aesKeyBigInt = result[handleString];
     if (aesKeyBigInt === null || aesKeyBigInt === undefined) {
