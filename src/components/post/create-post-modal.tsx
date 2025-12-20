@@ -177,6 +177,7 @@ export function CreatePostModal({ isOpen, onClose }: CreatePostModalProps) {
   }, [isSuccess, receipt, onClose, success, notifyError]);
 
   useEffect(() => {
+    if (!isOpen) return;
     const currentEditor = editorRef.current;
     if (!currentEditor) return;
     
@@ -269,7 +270,7 @@ export function CreatePostModal({ isOpen, onClose }: CreatePostModalProps) {
     return () => {
       currentEditor.removeEventListener("input", handleInput);
     };
-  }, []);
+  }, [isOpen]);
 
   const getPlainText = () => {
     return segments.map((s) => s.content).join("");
